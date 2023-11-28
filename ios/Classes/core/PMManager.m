@@ -168,10 +168,37 @@
     if (isExist) {
         return YES;
     }
-    NSArray *rArray = [PHAssetResource assetResourcesForAsset:asset];
-    // If this returns NO, then the asset is in iCloud or not saved locally yet.
-    return [[rArray.lastObject valueForKey:@"locallyAvailable"] boolValue];
+    if ([asset isAdjust]) {
+        PHAssetResource *resource = [asset getAdjustResource];
+        if (resource == nil) {
+            return NO;
+        }
+        // iOS 1.裁剪的图不会是第一个
+        // 2. live图和其他图是第一个
+        // If this returns NO, then the asset is in iCloud or not saved locally yet.
+        return [[resource valueForKey:@"locallyAvailable"] boolValue];
+    } else {
+        NSArray *rArray = [PHAssetResource assetResourcesForAsset:asset];
+        return [[rArray.firstObject valueForKey:@"locallyAvailable"] boolValue];
+    }
+
+   
 }
+
+
+- (BOOL)entityIsLocallyAvailable:(NSString *)assetId {
+    PHFetchResult<PHAsset *> *result =
+    [PHAsset fetchAssetsWithLocalIdentifiers:@[assetId]
+                                     options:[PHFetchOptions new]];
+    if (!result) {
+        return NO;
+    }
+    PHAsset *asset = result.firstObject;
+    NSArray *rArray = [PHAssetResource assetResourcesForAsset:asset];
+    // If this returns NO, then the asset is in iCloud and not saved locally yet.
+    return [[rArray.firstObject valueForKey:@"locallyAvailable"] boolValue];
+}
+
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
